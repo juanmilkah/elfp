@@ -83,6 +83,13 @@ pub struct ElfHeaderRow {
     pub value: String,
 }
 
+impl std::fmt::Display for ElfHeaderRow {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let txt = format!("{}\t{}", self.field, self.value);
+        write!(f, "{}", txt)
+    }
+}
+
 impl ElfHeader {
     pub fn to_table_rows(&self) -> Vec<ElfHeaderRow> {
         vec![
@@ -164,40 +171,12 @@ impl ElfHeader {
 
 impl std::fmt::Display for ElfHeader {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let magic = format!("MAGIC: {}", self.magic_number);
-        let platform = format!("PLATFORM: {}", self.platform_type);
-        let endianness = format!("ENDIANNESS: {}", self.endianness);
-        let elf_version = format!("ELF_VERSION: {}", self.elf_version);
-        let target_abi = format!("TARGET_SYS_ABI: {}", self.target_system_abi);
-        let object_f_type = format!("OBJECT_FILE_TYPE: {}", self.object_file_type);
-        let instruction_set = format!("INSTRUCTION_SET: {}", self.instruction_set);
-        let e_version = format!("E_VERSION: {}", self.e_version);
-        let entry_point = format!("ENTRY_POINT: {}", self.entry_point);
-        let prog_header_offset = format!("PROGRAM_HEADER_OFFSET: {}", self.program_header_offset);
-        let section_header_offset =
-            format!("SECTION_HEADER_OFFSET: {}", self.section_header_offset);
-        let flags = format!("FLAGS: {}", self.flags);
-        let header_size = format!("HEADER_SIZE: {}", self.header_size);
-        let program_header_entry_size =
-            format!("PROG_HEADER_ENTRY_SIZE: {}", self.program_header_entry_size);
-        let program_header_entry_count = format!(
-            "PROG_HEADER_ENTRY_COUNT: {}",
-            self.program_header_entry_count
-        );
-        let section_header_entry_size =
-            format!("SECTION_HDR_ENTRY_SIZE: {}", self.section_header_entry_size);
-        let section_header_entry_count = format!(
-            "SECTION_HDR_ENTRY_COUNT: {}",
-            self.section_header_entry_count,
-        );
-        let section_header_sections_table_index = format!(
-            "SECTION_HDR_SECTIONS_TABLE_IDX: {}",
-            self.section_header_sections_table_index,
-        );
-
-        let txt = format!(
-            "\n{magic}\n{platform}\n{endianness}\n{elf_version}\n{target_abi}\n{object_f_type}\n{instruction_set}\n{e_version}\n{entry_point}\n{prog_header_offset}\n{section_header_offset}\n{flags}\n{header_size}\n{program_header_entry_size}\n{program_header_entry_count}\n{section_header_entry_size}\n{section_header_entry_count}\n{section_header_sections_table_index}"
-        );
+        let rows = self.to_table_rows();
+        let txt = rows
+            .iter()
+            .map(|r| r.to_string())
+            .collect::<Vec<String>>()
+            .join("\n");
 
         write!(f, "{}", txt)
     }
@@ -394,7 +373,6 @@ pub enum ElfInstructionSet {
     ZilogZ80,
 }
 
-#[allow(unreachable_code)]
 impl std::fmt::Display for ElfInstructionSet {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let txt = match self {
@@ -1203,5 +1181,6 @@ fn main() -> Result<(), String> {
     let elf: ElfBinary = parse_file(&args)?;
     let tabled_elf = Table::new(elf.header.to_table_rows());
     println!("{}", tabled_elf);
+    // println!("{}", elf.header);
     Ok(())
 }
