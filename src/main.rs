@@ -320,81 +320,6 @@ impl std::fmt::Display for EVersion {
     }
 }
 
-// Specifies target instruction set architecture. Some examples are:
-// Value
-// ISA
-// 0x00 	No specific instruction set
-// 0x01 	AT&T WE 32100
-// 0x02 	SPARC
-// 0x03 	x86
-// 0x04 	Motorola 68000 (M68k)
-// 0x05 	Motorola 88000 (M88k)
-// 0x06 	Intel MCU
-// 0x07 	Intel 80860
-// 0x08 	MIPS
-// 0x09 	IBM System/370
-// 0x0A 	MIPS RS3000 Little-endian
-// 0x0B – 0x0E 	Reserved for future use
-// 0x0F 	Hewlett-Packard PA-RISC
-// 0x13 	Intel 80960
-// 0x14 	PowerPC
-// 0x15 	PowerPC (64-bit)
-// 0x16 	S390, including S390x
-// 0x17 	IBM SPU/SPC
-// 0x18 – 0x23 	Reserved for future use
-// 0x24 	NEC V800
-// 0x25 	Fujitsu FR20
-// 0x26 	TRW RH-32
-// 0x27 	Motorola RCE
-// 0x28 	Arm (up to Armv7/AArch32)
-// 0x29 	Digital Alpha
-// 0x2A 	SuperH
-// 0x2B 	SPARC Version 9
-// 0x2C 	Siemens TriCore embedded processor
-// 0x2D 	Argonaut RISC Core
-// 0x2E 	Hitachi H8/300
-// 0x2F 	Hitachi H8/300H
-// 0x30 	Hitachi H8S
-// 0x31 	Hitachi H8/500
-// 0x32 	IA-64
-// 0x33 	Stanford MIPS-X
-// 0x34 	Motorola ColdFire
-// 0x35 	Motorola M68HC12
-// 0x36 	Fujitsu MMA Multimedia Accelerator
-// 0x37 	Siemens PCP
-// 0x38 	Sony nCPU embedded RISC processor
-// 0x39 	Denso NDR1 microprocessor
-// 0x3A 	Motorola Star*Core processor
-// 0x3B 	Toyota ME16 processor
-// 0x3C 	STMicroelectronics ST100 processor
-// 0x3D 	Advanced Logic Corp. TinyJ embedded processor family
-// 0x3E 	AMD x86-64
-// 0x3F 	Sony DSP Processor
-// 0x40 	Digital Equipment Corp. PDP-10
-// 0x41 	Digital Equipment Corp. PDP-11
-// 0x42 	Siemens FX66 microcontroller
-// 0x43 	STMicroelectronics ST9+ 8/16-bit microcontroller
-// 0x44 	STMicroelectronics ST7 8-bit microcontroller
-// 0x45 	Motorola MC68HC16 Microcontroller
-// 0x46 	Motorola MC68HC11 Microcontroller
-// 0x47 	Motorola MC68HC08 Microcontroller
-// 0x48 	Motorola MC68HC05 Microcontroller
-// 0x49 	Silicon Graphics SVx
-// 0x4A 	STMicroelectronics ST19 8-bit microcontroller
-// 0x4B 	Digital VAX
-// 0x4C 	Axis Communications 32-bit embedded processor
-// 0x4D 	Infineon Technologies 32-bit embedded processor
-// 0x4E 	Element 14 64-bit DSP Processor
-// 0x4F 	LSI Logic 16-bit DSP Processor
-// 0x8C 	TMS320C6000 Family
-// 0xAF 	MCST Elbrus e2k
-// 0xB7 	Arm 64-bits (Armv8/AArch64)
-// 0xDC 	Zilog Z80
-// 0xF3 	RISC-V
-// 0xF7 	Berkeley Packet Filter
-// 0x101 	WDC 65C816
-// 0x102 	LoongArch
-
 #[derive(Debug)]
 pub enum ElfInstructionSet {
     AdvancedLogicCorpTinyJ,
@@ -473,76 +398,88 @@ pub enum ElfInstructionSet {
 impl std::fmt::Display for ElfInstructionSet {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let txt = match self {
-            ElfInstructionSet::AdvancedLogicCorpTinyJ => todo!(),
-            ElfInstructionSet::AmdX86_64 => "AMD x86_64",
-            ElfInstructionSet::ArgonautRiscCore => todo!(),
-            ElfInstructionSet::Arm => todo!(),
-            ElfInstructionSet::Arm64bit => todo!(),
-            ElfInstructionSet::AtTwe32100 => todo!(),
-            ElfInstructionSet::AxisCommunications32bit => todo!(),
-            ElfInstructionSet::BerkeleyPacketFilter => todo!(),
-            ElfInstructionSet::DensoNdr1 => todo!(),
-            ElfInstructionSet::DigitalAlpha => todo!(),
-            ElfInstructionSet::DigitalEquipmentCorpPdp10 => todo!(),
-            ElfInstructionSet::DigitalEquipmentCorpPdp11 => todo!(),
-            ElfInstructionSet::DigitalVax => todo!(),
-            ElfInstructionSet::Element14_64bitDSP => todo!(),
-            ElfInstructionSet::FujitsuFr20 => todo!(),
-            ElfInstructionSet::FujitsuMma => todo!(),
-            ElfInstructionSet::HewlettPackardPaRisc => todo!(),
-            ElfInstructionSet::HitachiH8500 => todo!(),
-            ElfInstructionSet::HitachiH8S => todo!(),
-            ElfInstructionSet::HitachiH8_300 => todo!(),
-            ElfInstructionSet::HitachiH8_300H => todo!(),
-            ElfInstructionSet::Ia64 => todo!(),
-            ElfInstructionSet::IbmSpuSpc => todo!(),
-            ElfInstructionSet::Ibmsystem370 => todo!(),
-            ElfInstructionSet::InfineonTechnologies32bit => todo!(),
-            ElfInstructionSet::Intel80860 => todo!(),
-            ElfInstructionSet::Intel80960 => todo!(),
-            ElfInstructionSet::IntelMcu => todo!(),
-            ElfInstructionSet::LoongArch => todo!(),
-            ElfInstructionSet::LsiLogic16bitDsp => todo!(),
-            ElfInstructionSet::Mips => todo!(),
-            ElfInstructionSet::Mipsrs3000LittleEndian => todo!(),
-            ElfInstructionSet::McstElbrusE2k => todo!(),
-            ElfInstructionSet::Motorola68000M68k => todo!(),
-            ElfInstructionSet::Motorola88000M88k => todo!(),
-            ElfInstructionSet::MotorolaColdFire => todo!(),
-            ElfInstructionSet::MotorolaM68hc12 => todo!(),
-            ElfInstructionSet::MotorolaMc68hc05 => todo!(),
-            ElfInstructionSet::MotorolaMc68hc08 => todo!(),
-            ElfInstructionSet::MotorolaMc68hc11 => todo!(),
-            ElfInstructionSet::MotorolaMc68hc16 => todo!(),
-            ElfInstructionSet::MotorolaRce => todo!(),
-            ElfInstructionSet::MotorolaStarCore => todo!(),
-            ElfInstructionSet::NecV800 => todo!(),
-            ElfInstructionSet::PowerPc => todo!(),
-            ElfInstructionSet::PowerPc64bit => todo!(),
-            ElfInstructionSet::Reserved => todo!(),
-            ElfInstructionSet::RiscV => todo!(),
-            ElfInstructionSet::S390 => todo!(),
-            ElfInstructionSet::Sparc => todo!(),
-            ElfInstructionSet::SiemensFx66 => todo!(),
-            ElfInstructionSet::SiemensPcp => todo!(),
-            ElfInstructionSet::SiemensTriCore => todo!(),
-            ElfInstructionSet::SiliconGraphicsSvx => todo!(),
-            ElfInstructionSet::SonyDsp => todo!(),
-            ElfInstructionSet::SonyNCpu => todo!(),
-            ElfInstructionSet::SparcV9 => todo!(),
-            ElfInstructionSet::StanfordMipsX => todo!(),
-            ElfInstructionSet::StmicroElectronicsSt100 => todo!(),
-            ElfInstructionSet::StmicroElectronicsSt19 => todo!(),
-            ElfInstructionSet::StmicroElectronicsSt7 => todo!(),
-            ElfInstructionSet::StmicroElectronicsSt9 => todo!(),
-            ElfInstructionSet::SuperH => todo!(),
-            ElfInstructionSet::Tms320c6000Family => todo!(),
-            ElfInstructionSet::ToyotaMe16 => todo!(),
-            ElfInstructionSet::TrwRh32 => todo!(),
-            ElfInstructionSet::UnSpecified => todo!(),
-            ElfInstructionSet::Wdc65c816 => todo!(),
-            ElfInstructionSet::X86 => todo!(),
-            ElfInstructionSet::ZilogZ80 => todo!(),
+            ElfInstructionSet::UnSpecified => "No specific instruction set",
+            ElfInstructionSet::AtTwe32100 => "AT&T WE 32100",
+            ElfInstructionSet::Sparc => "SPARC",
+            ElfInstructionSet::X86 => "x86",
+            ElfInstructionSet::Motorola68000M68k => "Motorola 68000 (M68k)",
+            ElfInstructionSet::Motorola88000M88k => "Motorola 88000 (M88k)",
+            ElfInstructionSet::IntelMcu => "Intel MCU",
+            ElfInstructionSet::Intel80860 => "Intel 80860",
+            ElfInstructionSet::Mips => "MIPS",
+            ElfInstructionSet::Ibmsystem370 => "IBM System/370",
+            ElfInstructionSet::Mipsrs3000LittleEndian => "MIPS RS3000 Little-endian",
+            ElfInstructionSet::Reserved => "Reserved for future use",
+            ElfInstructionSet::HewlettPackardPaRisc => "Hewlett-Packard PA-RISC",
+            ElfInstructionSet::Intel80960 => "Intel 80960",
+            ElfInstructionSet::PowerPc => "PowerPC",
+            ElfInstructionSet::PowerPc64bit => "PowerPC (64-bit)",
+            ElfInstructionSet::S390 => "S390, including S390x",
+            ElfInstructionSet::IbmSpuSpc => "IBM SPU/SPC",
+            ElfInstructionSet::NecV800 => "NEC V800",
+            ElfInstructionSet::FujitsuFr20 => "Fujitsu FR20",
+            ElfInstructionSet::TrwRh32 => "TRW RH-32",
+            ElfInstructionSet::MotorolaRce => "Motorola RCE",
+            ElfInstructionSet::Arm => "Arm (up to Armv7/AArch32)",
+            ElfInstructionSet::DigitalAlpha => "Digital Alpha",
+            ElfInstructionSet::SuperH => "SuperH",
+            ElfInstructionSet::SparcV9 => "SPARC Version 9",
+            ElfInstructionSet::SiemensTriCore => "Siemens TriCore embedded processor",
+            ElfInstructionSet::ArgonautRiscCore => "Argonaut RISC Core",
+            ElfInstructionSet::HitachiH8_300 => "Hitachi H8/300",
+            ElfInstructionSet::HitachiH8_300H => "Hitachi H8/300H",
+            ElfInstructionSet::HitachiH8S => "Hitachi H8S",
+            ElfInstructionSet::HitachiH8500 => "Hitachi H8/500",
+            ElfInstructionSet::Ia64 => "IA-64",
+            ElfInstructionSet::StanfordMipsX => "Stanford MIPS-X",
+            ElfInstructionSet::MotorolaColdFire => "Motorola ColdFire",
+            ElfInstructionSet::MotorolaM68hc12 => "Motorola M68HC12",
+            ElfInstructionSet::FujitsuMma => "Fujitsu MMA Multimedia Accelerator",
+            ElfInstructionSet::SiemensPcp => "Siemens PCP",
+            ElfInstructionSet::SonyNCpu => "Sony nCPU embedded RISC processor",
+            ElfInstructionSet::DensoNdr1 => "Denso NDR1 microprocessor",
+            ElfInstructionSet::MotorolaStarCore => "Motorola Star*Core processor",
+            ElfInstructionSet::ToyotaMe16 => "Toyota ME16 processor",
+            ElfInstructionSet::StmicroElectronicsSt100 => "STMicroelectronics ST100 processor",
+            ElfInstructionSet::AdvancedLogicCorpTinyJ => {
+                "Advanced Logic Corp. TinyJ embedded processor family"
+            }
+            ElfInstructionSet::AmdX86_64 => "AMD x86-64",
+            ElfInstructionSet::SonyDsp => "Sony DSP Processor",
+            ElfInstructionSet::DigitalEquipmentCorpPdp10 => "Digital Equipment Corp. PDP-10",
+            ElfInstructionSet::DigitalEquipmentCorpPdp11 => "Digital Equipment Corp. PDP-11",
+            ElfInstructionSet::SiemensFx66 => "Siemens FX66 microcontroller",
+            ElfInstructionSet::StmicroElectronicsSt9 => {
+                "STMicroelectronics ST9+ 8/16-bit microcontroller"
+            }
+            ElfInstructionSet::StmicroElectronicsSt7 => {
+                "STMicroelectronics ST7 8-bit microcontroller"
+            }
+            ElfInstructionSet::MotorolaMc68hc16 => "Motorola MC68HC16 Microcontroller",
+            ElfInstructionSet::MotorolaMc68hc11 => "Motorola MC68HC11 Microcontroller",
+            ElfInstructionSet::MotorolaMc68hc08 => "Motorola MC68HC08 Microcontroller",
+            ElfInstructionSet::MotorolaMc68hc05 => "Motorola MC68HC05 Microcontroller",
+            ElfInstructionSet::SiliconGraphicsSvx => "Silicon Graphics SVx",
+            ElfInstructionSet::StmicroElectronicsSt19 => {
+                "STMicroelectronics ST19 8-bit microcontroller"
+            }
+            ElfInstructionSet::DigitalVax => "Digital VAX",
+            ElfInstructionSet::AxisCommunications32bit => {
+                "Axis Communications 32-bit embedded processor"
+            }
+            ElfInstructionSet::InfineonTechnologies32bit => {
+                "Infineon Technologies 32-bit embedded processor"
+            }
+            ElfInstructionSet::Element14_64bitDSP => "Element 14 64-bit DSP Processor",
+            ElfInstructionSet::LsiLogic16bitDsp => "LSI Logic 16-bit DSP Processor",
+            ElfInstructionSet::Tms320c6000Family => "TMS320C6000 Family",
+            ElfInstructionSet::McstElbrusE2k => "MCST Elbrus e2k",
+            ElfInstructionSet::Arm64bit => "Arm 64-bits (Armv8/AArch64)",
+            ElfInstructionSet::ZilogZ80 => "Zilog Z80",
+            ElfInstructionSet::RiscV => "RISC-V",
+            ElfInstructionSet::BerkeleyPacketFilter => "Berkeley Packet Filter",
+            ElfInstructionSet::Wdc65c816 => "WDC 65C816",
+            ElfInstructionSet::LoongArch => "LoongArch",
         };
 
         write!(f, "{}", txt)
