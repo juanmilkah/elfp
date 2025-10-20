@@ -70,21 +70,22 @@ impl Parse for Cli {
     }
 
     fn helper() {
-        // TODO: Fix this; Use raw strings
         const USAGE_INFO: &str = r#"
 Usage:
     program <flags>
         --help    , -h    Show this information
         --filepath, -f    Path to the elf file
-        --header  , -e    Display only the elf header
+        --header  , -e    Display only the elf header (default)
         --program , -p    Display only the elf program header
+        --section , -s    Display only the section header
+        --all     , -a    Display all headers
         "#;
 
         println!("{USAGE_INFO}");
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default, Tabled)]
 pub struct ElfHeader {
     // 0x7F followed by ELF(45 4c 46) in ASCII;
     pub magic_number: ElfMagicNumber,
@@ -128,33 +129,35 @@ pub struct ElfHeader {
     pub section_header_sections_table_index: ElfSectionHeaderSectionsTableIndex,
 }
 
-#[derive(Debug)]
-pub struct ElfHeaderRow {
-    pub field: String,
-    pub value: String,
-}
-
-impl std::fmt::Display for ElfHeaderRow {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let txt = format!("{}\t{}", self.field, self.value);
-        write!(f, "{}", txt)
-    }
-}
-
 impl std::fmt::Display for ElfHeader {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let rows = self.to_table_rows();
-        let txt = rows
-            .iter()
-            .map(|r| r.to_string())
-            .collect::<Vec<String>>()
-            .join("\n");
-
+        let txt = format!(
+            "{}\n{}\n{}\n{}\n{}\n{}\n{}\n{}\n{}\n{}\n{}\n{}\n{}\n{}\n{}\n{}\n{}\n{}\n{}",
+            self.magic_number,
+            self.platform_type,
+            self.endianness,
+            self.elf_header_version,
+            self.target_system_abi,
+            self.target_abi_version,
+            self.object_file_type,
+            self.instruction_set,
+            self.elf_version,
+            self.entry_point,
+            self.program_header_offset,
+            self.section_header_offset,
+            self.flags,
+            self.header_size,
+            self.program_header_entry_size,
+            self.program_header_entry_count,
+            self.section_header_entry_size,
+            self.section_header_entry_count,
+            self.section_header_sections_table_index
+        );
         write!(f, "{}", txt)
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct ElfSectionHeaderSectionsTableIndex(u16);
 
 impl std::fmt::Display for ElfSectionHeaderSectionsTableIndex {
@@ -163,7 +166,7 @@ impl std::fmt::Display for ElfSectionHeaderSectionsTableIndex {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct ElfSectionHeaderEntrySize(u16);
 
 impl std::fmt::Display for ElfSectionHeaderEntrySize {
@@ -172,7 +175,7 @@ impl std::fmt::Display for ElfSectionHeaderEntrySize {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct ElfSectionHeaderEntryCount(u16);
 
 impl std::fmt::Display for ElfSectionHeaderEntryCount {
@@ -181,7 +184,7 @@ impl std::fmt::Display for ElfSectionHeaderEntryCount {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct ElfProgramHeaderEntryCount(u16);
 
 impl ElfProgramHeaderEntryCount {
@@ -196,7 +199,7 @@ impl std::fmt::Display for ElfProgramHeaderEntryCount {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct ElfProgramHeaderEntrySize(u16);
 
 impl std::fmt::Display for ElfProgramHeaderEntrySize {
@@ -205,7 +208,7 @@ impl std::fmt::Display for ElfProgramHeaderEntrySize {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct ElfHeaderSize(u16);
 
 impl std::fmt::Display for ElfHeaderSize {
@@ -214,7 +217,7 @@ impl std::fmt::Display for ElfHeaderSize {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct ElfFlags(u32);
 
 impl std::fmt::Display for ElfFlags {
@@ -223,7 +226,7 @@ impl std::fmt::Display for ElfFlags {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct ElfSectionHeaderOffset(usize);
 
 impl std::fmt::Display for ElfSectionHeaderOffset {
@@ -232,7 +235,7 @@ impl std::fmt::Display for ElfSectionHeaderOffset {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct ElfProgramHeaderOffset(usize);
 
 impl std::fmt::Display for ElfProgramHeaderOffset {
@@ -241,7 +244,7 @@ impl std::fmt::Display for ElfProgramHeaderOffset {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct ElfEntryPoint(usize);
 
 impl std::fmt::Display for ElfEntryPoint {
@@ -250,7 +253,7 @@ impl std::fmt::Display for ElfEntryPoint {
     }
 }
 
-#[derive(Debug)]
+#[derive(Default, Debug)]
 pub struct ElfVersion(u32);
 
 impl std::fmt::Display for ElfVersion {
@@ -259,7 +262,7 @@ impl std::fmt::Display for ElfVersion {
     }
 }
 
-#[derive(Debug)]
+#[derive(Default, Debug)]
 pub enum ElfInstructionSet {
     AdvancedLogicCorpTinyJ,
     AmdX86_64,
@@ -327,6 +330,7 @@ pub enum ElfInstructionSet {
     Tms320c6000Family,
     ToyotaMe16,
     TrwRh32,
+    #[default]
     UnSpecified,
     Wdc65c816,
     X86,
@@ -424,9 +428,10 @@ impl std::fmt::Display for ElfInstructionSet {
     }
 }
 
-#[derive(Debug)]
+#[derive(Default, Debug)]
 pub enum ElfObjectFileType {
-    EtNone,   //Unknown.
+    #[default]
+    EtNone, //Unknown.
     EtRel,    //Relocatable file.
     EtExec,   //Executable file.
     EtDyn,    //Shared object.
@@ -446,7 +451,7 @@ impl std::fmt::Display for ElfObjectFileType {
             ElfObjectFileType::EtDyn => "ET_DYN",
             ElfObjectFileType::EtCore => "ET_CORE",
             ElfObjectFileType::EtLoos => "ET_LOOS",
-            ElfObjectFileType::EtHios => "ET_HIO",
+            ElfObjectFileType::EtHios => "ET_HIOS",
             ElfObjectFileType::EtLoproc => "ET_LOPROC",
             ElfObjectFileType::EtHiproc => "ET_HIPROC",
         };
@@ -455,7 +460,7 @@ impl std::fmt::Display for ElfObjectFileType {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct ElfReservedPadding([u8; 7]);
 
 impl std::fmt::Display for ElfReservedPadding {
@@ -464,7 +469,7 @@ impl std::fmt::Display for ElfReservedPadding {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct ElfTargetAbiVersion(u8);
 
 impl std::fmt::Display for ElfTargetAbiVersion {
@@ -473,8 +478,10 @@ impl std::fmt::Display for ElfTargetAbiVersion {
     }
 }
 
-#[derive(Debug)]
+#[derive(Default, Debug)]
 pub enum ElfTargetSystemAbi {
+    #[default]
+    Unknown,
     SystemV,
     Hpux,
     NetBsd,
@@ -516,13 +523,14 @@ impl std::fmt::Display for ElfTargetSystemAbi {
             ElfTargetSystemAbi::FenixOs => "FenixOS",
             ElfTargetSystemAbi::NuxiCloudAbi => "Nuxi CloudABI",
             ElfTargetSystemAbi::StratusTechnologiesOpenVos => "Stratus Technologies OpenVOS",
+            ElfTargetSystemAbi::Unknown => "UNKNOWN",
         };
 
         write!(f, "{}", txt)
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct ElfHeaderVersion(u8);
 
 impl std::fmt::Display for ElfHeaderVersion {
@@ -531,8 +539,9 @@ impl std::fmt::Display for ElfHeaderVersion {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub enum ElfPlatformType {
+    #[default]
     Bit32,
     Bit64,
 }
@@ -548,8 +557,9 @@ impl std::fmt::Display for ElfPlatformType {
     }
 }
 
-#[derive(Debug)]
+#[derive(Default, Debug)]
 pub enum ElfEndianness {
+    #[default]
     Little,
     Big,
 }
@@ -592,7 +602,7 @@ impl ElfEndianness {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct ElfMagicNumber([u8; 4]);
 
 impl std::fmt::Display for ElfMagicNumber {
@@ -852,14 +862,14 @@ pub fn parse_instruction_set(
         0x08 => ElfInstructionSet::Mips,
         0x09 => ElfInstructionSet::Ibmsystem370,
         0x0A => ElfInstructionSet::Mipsrs3000LittleEndian,
-        // 0x0B – 0x0E 	Reserved for future use
+        0x0B..=0x0E => ElfInstructionSet::Reserved,
         0x0F => ElfInstructionSet::HewlettPackardPaRisc,
         0x13 => ElfInstructionSet::Intel80960,
         0x14 => ElfInstructionSet::PowerPc,
         0x15 => ElfInstructionSet::PowerPc64bit,
         0x16 => ElfInstructionSet::S390,
         0x17 => ElfInstructionSet::IbmSpuSpc,
-        // 0x18 => ElfInstructionSet::– 0x23 	Reserved for future use,
+        0x18..=0x23 => ElfInstructionSet::Reserved,
         0x24 => ElfInstructionSet::NecV800,
         0x25 => ElfInstructionSet::FujitsuFr20,
         0x26 => ElfInstructionSet::TrwRh32,
@@ -1115,9 +1125,15 @@ pub fn read_file(filepath: &Path) -> Result<Vec<u8>, String> {
 }
 
 // This is an array of N (given in the `ElfHeader`) entries
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct ElfProgramHeader {
     pub inner: Vec<ElfProgramHeaderEntry>,
+}
+
+impl ElfProgramHeader {
+    pub fn inner(self) -> Vec<ElfProgramHeaderEntry> {
+        self.inner
+    }
 }
 
 impl std::fmt::Display for ElfProgramHeader {
@@ -1126,20 +1142,7 @@ impl std::fmt::Display for ElfProgramHeader {
     }
 }
 
-impl Displayable for ElfProgramHeader {
-    fn to_table_rows(&self) -> Vec<Row> {
-        self.inner
-            .iter()
-            .enumerate()
-            .map(|(i, entry)| Row {
-                field: (i + 1).to_string(),
-                value: FieldValue::List(entry.to_table_rows()),
-            })
-            .collect::<Vec<Row>>()
-    }
-}
-
-#[derive(Debug)]
+#[derive(Debug, Tabled)]
 pub struct ElfProgramHeaderEntry {
     pub segment_type: ElfSegmentType,
     pub segment_flags: ElfSegmentFlags,
@@ -1159,58 +1162,18 @@ pub struct ElfProgramHeaderEntry {
 
 impl std::fmt::Display for ElfProgramHeaderEntry {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let segment_type = format!("SEG_TYPE: {}", self.segment_type);
-        let segment_flags = format!("SEG_FLAGS: {}", self.segment_flags);
-        let segment_offset = format!("SEG_OFFSET: {}", self.segment_offset);
-        let segment_vaddr = format!("SEG_VADDR: {}", self.segment_vaddr);
-        let segment_paddr = format!("SEG_PADDR: {}", self.segment_paddr);
-        let segment_file_size = format!("SEG_FILE_SIZE: {}", self.segment_file_size);
-        let segment_memory_size = format!("SEG_MEM_SIZE: {}", self.segment_memory_size);
-        let segment_allignment = format!("SEG_ALLIGN: {}", self.segment_allignment);
-
         let txt = format!(
-            "{segment_type}\n{segment_flags}\n{segment_offset}\n{segment_vaddr}\n{segment_paddr}\n{segment_file_size}\n{segment_memory_size}\n{segment_allignment}"
+            "{}\n{}\n{}\n{}\n{}\n{}\n{}\n{}",
+            self.segment_type,
+            self.segment_flags,
+            self.segment_offset,
+            self.segment_vaddr,
+            self.segment_paddr,
+            self.segment_file_size,
+            self.segment_memory_size,
+            self.segment_allignment
         );
         write!(f, "{}", txt)
-    }
-}
-
-impl Displayable for ElfProgramHeaderEntry {
-    fn to_table_rows(&self) -> Vec<Row> {
-        vec![
-            Row {
-                field: "SEG_TYPE".into(),
-                value: FieldValue::Single(self.segment_type.to_string()),
-            },
-            Row {
-                field: "SEG_FLAGS".into(),
-                value: FieldValue::Single(self.segment_flags.to_string()),
-            },
-            Row {
-                field: "SEG_OFFSET".into(),
-                value: FieldValue::Single(self.segment_offset.to_string()),
-            },
-            Row {
-                field: "SEG_VADDR".into(),
-                value: FieldValue::Single(self.segment_vaddr.to_string()),
-            },
-            Row {
-                field: "SEG_PADDR".into(),
-                value: FieldValue::Single(self.segment_paddr.to_string()),
-            },
-            Row {
-                field: "SEG_FILE_SIZE".into(),
-                value: FieldValue::Single(self.segment_file_size.to_string()),
-            },
-            Row {
-                field: "SEG_MEM_SIZE".into(),
-                value: FieldValue::Single(self.segment_memory_size.to_string()),
-            },
-            Row {
-                field: "SEG_ALLIGN".into(),
-                value: FieldValue::Single(self.segment_allignment.to_string()),
-            },
-        ]
     }
 }
 
@@ -1219,7 +1182,7 @@ pub struct ElfSegmentAllignment(usize);
 
 impl std::fmt::Display for ElfSegmentAllignment {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0)
+        write!(f, "{:X}", self.0)
     }
 }
 
@@ -1228,7 +1191,7 @@ pub struct ElfSegmentMemorySize(usize);
 
 impl std::fmt::Display for ElfSegmentMemorySize {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0)
+        write!(f, "{:X}", self.0)
     }
 }
 
@@ -1237,7 +1200,7 @@ pub struct ElfSegmentFileSize(usize);
 
 impl std::fmt::Display for ElfSegmentFileSize {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0)
+        write!(f, "{:X}", self.0)
     }
 }
 
@@ -1246,7 +1209,7 @@ pub struct ElfSegmentPAddr(usize);
 
 impl std::fmt::Display for ElfSegmentPAddr {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0)
+        write!(f, "{:X}", self.0)
     }
 }
 
@@ -1255,7 +1218,7 @@ pub struct ElfSegmentVAddr(usize);
 
 impl std::fmt::Display for ElfSegmentVAddr {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0)
+        write!(f, "{:X}", self.0)
     }
 }
 
@@ -1264,7 +1227,7 @@ pub struct ElfSegmentOffset(usize);
 
 impl std::fmt::Display for ElfSegmentOffset {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0)
+        write!(f, "{:X}", self.0)
     }
 }
 
@@ -1500,6 +1463,7 @@ pub fn parse_program_header_entry(
 ) -> Result<ElfProgramHeaderEntry, String> {
     let segment_type = parse_segment_type(pointer, content, endian)?;
     let mut segment_flags = ElfSegmentFlags::default();
+
     if let ElfPlatformType::Bit64 = platform {
         segment_flags = parse_segment_flags(pointer, content, endian)?;
     }
@@ -1508,6 +1472,7 @@ pub fn parse_program_header_entry(
     let segment_paddr = parse_segment_paddr(pointer, content, endian, platform)?;
     let segment_file_size = parse_segment_file_size(pointer, content, endian, platform)?;
     let segment_memory_size = parse_segment_memory_size(pointer, content, endian, platform)?;
+
     // These flags appear in a diffent offset depending on the target platform type
     // for allignment reasons
     if let ElfPlatformType::Bit32 = platform {
@@ -1546,124 +1511,7 @@ pub fn parse_program_header(
     Ok(ElfProgramHeader { inner })
 }
 
-// TODO: Figure out a better way to display nested table rows
-#[derive(Tabled)]
-pub struct Row {
-    field: String,
-    value: FieldValue,
-}
-
-impl std::fmt::Display for Row {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let txt = format!("{}\n{}", self.field, self.value);
-        write!(f, "{}", txt)
-    }
-}
-
-pub enum FieldValue {
-    Single(String),
-    List(Vec<Row>),
-}
-
-impl std::fmt::Display for FieldValue {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let txt = match self {
-            FieldValue::Single(val) => val.clone(),
-            FieldValue::List(field_values) => field_values
-                .iter()
-                .map(|v| v.to_string())
-                .collect::<Vec<String>>()
-                .join("\n"),
-        };
-
-        write!(f, "{}", txt)
-    }
-}
-
-pub trait Displayable {
-    fn to_table_rows(&self) -> Vec<Row>;
-}
-
-impl Displayable for ElfHeader {
-    fn to_table_rows(&self) -> Vec<Row> {
-        vec![
-            Row {
-                field: "MAGIC".to_string(),
-                value: FieldValue::Single(format!("{:x?}", self.magic_number.0)),
-            },
-            Row {
-                field: "PLATFORM".to_string(),
-                value: FieldValue::Single(self.platform_type.to_string()),
-            },
-            Row {
-                field: "ENDIANNESS".to_string(),
-                value: FieldValue::Single(self.endianness.to_string()),
-            },
-            Row {
-                field: "ELF_VERSION".to_string(),
-                value: FieldValue::Single(self.elf_header_version.to_string()),
-            },
-            Row {
-                field: "TARGET_SYS_ABI".to_string(),
-                value: FieldValue::Single(self.target_system_abi.to_string()),
-            },
-            Row {
-                field: "OBJECT_FILE_TYPE".to_string(),
-                value: FieldValue::Single(self.object_file_type.to_string()),
-            },
-            Row {
-                field: "INSTRUCTION_SET".to_string(),
-                value: FieldValue::Single(self.instruction_set.to_string()),
-            },
-            Row {
-                field: "E_VERSION".to_string(),
-                value: FieldValue::Single(self.elf_version.to_string()),
-            },
-            Row {
-                field: "ENTRY_POINT".to_string(),
-                value: FieldValue::Single(self.entry_point.to_string()),
-            },
-            Row {
-                field: "PROGRAM_HDR_OFFSET".to_string(),
-                value: FieldValue::Single(self.program_header_offset.to_string()),
-            },
-            Row {
-                field: "SECTION_HDR_OFFSET".to_string(),
-                value: FieldValue::Single(self.section_header_offset.to_string()),
-            },
-            Row {
-                field: "FLAGS".to_string(),
-                value: FieldValue::Single(self.flags.to_string()),
-            },
-            Row {
-                field: "HEADER_SIZE".to_string(),
-                value: FieldValue::Single(self.header_size.to_string()),
-            },
-            Row {
-                field: "PROG_HDR_ENTRY_SIZE".to_string(),
-                value: FieldValue::Single(self.program_header_entry_size.to_string()),
-            },
-            Row {
-                field: "PROG_HDR_ENTRY_COUNT".to_string(),
-                value: FieldValue::Single(self.program_header_entry_count.to_string()),
-            },
-            Row {
-                field: "SECTION_HDR_ENTRY_SIZE".to_string(),
-                value: FieldValue::Single(self.section_header_entry_size.to_string()),
-            },
-            Row {
-                field: "SECTION_HDR_ENTRY_COUNT".to_string(),
-                value: FieldValue::Single(self.section_header_entry_count.to_string()),
-            },
-            Row {
-                field: "SECTION_HDR_SECTIONS_TABLE_IDX".to_string(),
-                value: FieldValue::Single(self.section_header_sections_table_index.to_string()),
-            },
-        ]
-    }
-}
-
-#[derive(Debug)]
+#[derive(Debug, Default, Tabled)]
 pub struct ElfSectionHeader {
     // An offset to a string in the .shstrtab section that
     // represents the name of this section.
@@ -1697,135 +1545,87 @@ pub struct ElfSectionHeader {
 
 impl std::fmt::Display for ElfSectionHeader {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let name_offset = format!("SEC_NAME_OFFSET: {}", self.section_name_offset);
-        let header_type = format!("SEC_HDR_TYPE: {}", self.section_header_type);
-        let flags = format!("SEC_FLAGS: {}", self.section_flags);
-        let addr = format!("SEC_ADDR: {}", self.section_addr);
-        let offset = format!("SEC_OFFSET: {}", self.section_offset);
-        let size = format!("SEC_SIZE: {}", self.section_size);
-        let link = format!("SEC_LINK: {}", self.section_link);
-        let info = format!("SEC_INFO: {}", self.section_info);
-        let addr_allign = format!("SEC_ADDR_ALLIGN: {}", self.section_addr_allign);
-        let entry_size = format!("SEC_ENTRY_SIZE: {}", self.section_entry_size);
-
         let txt = format!(
-            "{name_offset}\n{header_type}\n{flags}\n{addr}\n{offset}\n{size}\n{link}\n{info}\n{addr_allign}\n{entry_size}"
+            "{}\n{}\n{}\n{}\n{}\n{}\n{}\n{}\n{}\n{}",
+            self.section_name_offset,
+            self.section_header_type,
+            self.section_flags,
+            self.section_addr,
+            self.section_offset,
+            self.section_size,
+            self.section_link,
+            self.section_info,
+            self.section_addr_allign,
+            self.section_entry_size
         );
         write!(f, "{}", txt)
     }
 }
 
-impl Displayable for ElfSectionHeader {
-    fn to_table_rows(&self) -> Vec<Row> {
-        vec![
-            Row {
-                field: "NAME_OFFSET".into(),
-                value: FieldValue::Single(self.section_name_offset.to_string()),
-            },
-            Row {
-                field: "HDR_TYPE".into(),
-                value: FieldValue::Single(self.section_header_type.to_string()),
-            },
-            Row {
-                field: "FLAGS".into(),
-                value: FieldValue::Single(self.section_flags.to_string()),
-            },
-            Row {
-                field: "ADDR".into(),
-                value: FieldValue::Single(self.section_addr.to_string()),
-            },
-            Row {
-                field: "OFFSET".into(),
-                value: FieldValue::Single(self.section_offset.to_string()),
-            },
-            Row {
-                field: "SIZE".into(),
-                value: FieldValue::Single(self.section_size.to_string()),
-            },
-            Row {
-                field: "LINK".into(),
-                value: FieldValue::Single(self.section_link.to_string()),
-            },
-            Row {
-                field: "INFO".into(),
-                value: FieldValue::Single(self.section_info.to_string()),
-            },
-            Row {
-                field: "ADDR_ALLIGN".into(),
-                value: FieldValue::Single(self.section_addr_allign.to_string()),
-            },
-            Row {
-                field: "ENTRY_SIZE".into(),
-                value: FieldValue::Single(self.section_entry_size.to_string()),
-            },
-        ]
-    }
-}
-
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct ElfSectionAddrAllign(usize);
 
 impl std::fmt::Display for ElfSectionAddrAllign {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0)
+        write!(f, "{:X}", self.0)
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct ElfSectionEntrySize(usize);
 
 impl std::fmt::Display for ElfSectionEntrySize {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0)
+        write!(f, "{:X}", self.0)
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct ElfSectionLink(u32);
 
 impl std::fmt::Display for ElfSectionLink {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0)
+        write!(f, "{:X}", self.0)
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct ElfSectionInfo(u32);
 
 impl std::fmt::Display for ElfSectionInfo {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0)
+        write!(f, "{:X}", self.0)
     }
 }
 
-#[derive(Debug)]
+#[derive(Default, Debug)]
 pub struct ElfSectionAddr(usize);
 
 impl std::fmt::Display for ElfSectionAddr {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0)
+        write!(f, "{:X}", self.0)
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct ElfSectionOffset(usize);
 
 impl std::fmt::Display for ElfSectionOffset {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0)
+        write!(f, "{:X}", self.0)
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct ElfSectionSize(usize);
 
 impl std::fmt::Display for ElfSectionSize {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0)
+        write!(f, "{:X}", self.0)
     }
 }
 
-#[derive(Debug)]
+#[derive(Default, Debug)]
 pub enum ElfSectionFlags {
     ShfWrite,           // Writable
     ShfAlloc,           // Occupies memory during execution
@@ -1841,6 +1641,8 @@ pub enum ElfSectionFlags {
     ShfMaskproc,        // Processor-specific
     ShfOrdered,         // Special ordering requirement (Solaris)
     ShfExclude,         // Section is excluded unless referenced or allocated (Solaris)
+    #[default]
+    ShfNull, //
 }
 
 impl std::fmt::Display for ElfSectionFlags {
@@ -1860,15 +1662,17 @@ impl std::fmt::Display for ElfSectionFlags {
             ElfSectionFlags::ShfMaskproc => "SHF_MASKPROC",
             ElfSectionFlags::ShfOrdered => "SHF_ORDERED",
             ElfSectionFlags::ShfExclude => "SHF_EXCLUDE",
+            ElfSectionFlags::ShfNull => "SHF_NULL",
         };
 
         write!(f, "{}", txt)
     }
 }
 
-#[derive(Debug)]
+#[derive(Default, Debug)]
 pub enum ElfSectionHeaderType {
-    ShtNull,         //Section header table entry unused
+    #[default]
+    ShtNull, //Section header table entry unused
     ShtProgbits,     //Program data
     ShtSymtab,       //Symbol table
     ShtStrtab,       //String table
@@ -1917,17 +1721,17 @@ impl std::fmt::Display for ElfSectionHeaderType {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct ElfSectionNameOffset(u32);
 
 impl std::fmt::Display for ElfSectionNameOffset {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0)
+        write!(f, "{:X}", self.0)
     }
 }
 
 // TODO: Join Everything!!
-#[derive(Debug)]
+#[derive(Debug, Default, Tabled)]
 pub struct ElfBinary {
     pub header: ElfHeader,
     pub program_header: ElfProgramHeader,
@@ -1936,11 +1740,11 @@ pub struct ElfBinary {
 
 impl std::fmt::Display for ElfBinary {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let header = self.header.to_string();
-
-        let txt = format!("HEADER: {}", header);
-
-        write!(f, "{}", txt)
+        write!(
+            f,
+            "{}\n{}\n{}",
+            self.header, self.program_header, self.section_header
+        )
     }
 }
 
@@ -2056,7 +1860,8 @@ pub fn parse_section_flags(
         0xF0000000 => ElfSectionFlags::ShfMaskproc,
         0x4000000 => ElfSectionFlags::ShfOrdered,
         0x8000000 => ElfSectionFlags::ShfExclude,
-        other => return Err(format!("Unsupported sectoi flags: {other}")),
+        _ => ElfSectionFlags::ShfNull,
+        // other => return Err(format!("Unsupported section flags: {other}")),
     };
 
     Ok(flags)
@@ -2150,55 +1955,69 @@ pub fn parse_section_header(
     })
 }
 
-pub fn pretty_display<T>(part: &T)
+pub fn pretty_display<T>(items: &[T])
 where
-    T: Displayable,
+    T: Tabled,
 {
-    let table = Table::new(part.to_table_rows());
+    let table = Table::new(items);
     println!("{}", table);
 }
 
-pub fn parse_file(args: &Cli) -> Result<(), String> {
+pub fn parse_file(args: &Cli) -> Result<ElfBinary, String> {
     let content = read_file(&args.filepath)?;
+    let mut elf_binary = ElfBinary::default();
     let mut pointer = 0x0usize;
-    let header = parse_header(&mut pointer, &content)?;
+    elf_binary.header = parse_header(&mut pointer, &content)?;
+
     match args.to_process {
-        ElfParts::Header => {
-            pretty_display(&header);
-        }
+        ElfParts::Header => {}
         ElfParts::ProgramHeader => {
-            let program_header = parse_program_header(
+            pointer = elf_binary.header.program_header_offset.0;
+            elf_binary.program_header = parse_program_header(
                 &mut pointer,
                 &content,
-                &header.program_header_entry_count,
-                &header.endianness,
-                &header.platform_type,
+                &elf_binary.header.program_header_entry_count,
+                &elf_binary.header.endianness,
+                &elf_binary.header.platform_type,
             )?;
-
-            // println!("{}", program_header);
-            for entry in &program_header.inner {
-                pretty_display(entry);
-            }
         }
         ElfParts::SectionHeader => {
-            let section_header = parse_section_header(
+            pointer = elf_binary.header.section_header_offset.0;
+            elf_binary.section_header = parse_section_header(
                 &mut pointer,
                 &content,
-                &header.endianness,
-                &header.platform_type,
+                &elf_binary.header.endianness,
+                &elf_binary.header.platform_type,
+            )?;
+        }
+        ElfParts::All => {
+            pointer = elf_binary.header.program_header_offset.0;
+            elf_binary.program_header = parse_program_header(
+                &mut pointer,
+                &content,
+                &elf_binary.header.program_header_entry_count,
+                &elf_binary.header.endianness,
+                &elf_binary.header.platform_type,
             )?;
 
-            // println!("{}", section_header);
-            pretty_display(&section_header);
+            pointer = elf_binary.header.section_header_offset.0;
+            elf_binary.section_header = parse_section_header(
+                &mut pointer,
+                &content,
+                &elf_binary.header.endianness,
+                &elf_binary.header.platform_type,
+            )?;
         }
-        ElfParts::All => todo!(),
     }
 
-    Ok(())
+    Ok(elf_binary)
 }
 
 fn main() -> Result<(), String> {
     let args = Cli::parse(std::env::args().skip(1))?;
-    parse_file(&args)?;
+    let elf_binary: ElfBinary = parse_file(&args)?;
+    pretty_display(&[elf_binary.header]);
+    pretty_display(&elf_binary.program_header.inner());
+    pretty_display(&[elf_binary.section_header]);
     Ok(())
 }
