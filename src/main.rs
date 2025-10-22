@@ -43,10 +43,10 @@ impl Parse for Cli {
         while let Some(next) = args.next() {
             let next = next.as_str();
             if next == "--filepath" || next == "-f" {
-                let next: String = args
-                    .next()
-                    .ok_or_else(|| Err::<Self::Item, Self::Error>("Missing filepath".to_string()))
-                    .unwrap();
+                let next = match args.next() {
+                    Some(val) => val,
+                    None => return Err("Missing Filepath".to_string()),
+                };
                 cli.filepath = Path::new(&next).to_path_buf();
             } else if next == "--help" || next == "-h" {
                 Self::helper();
@@ -2013,7 +2013,7 @@ pub fn parse_section_header(
     let bytes: &[u8] = &content[*section_offset..*section_offset + section_size];
     let names = bytes
         .split(|b| *b == 0u8)
-        .map(|b| String::from_utf8(b.to_vec()).unwrap())
+        .map(|b| String::from_utf8_lossy(b).to_string())
         .collect::<Vec<String>>();
     entries
         .iter_mut()
