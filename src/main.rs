@@ -603,7 +603,7 @@ impl ElfEndianness {
 }
 
 #[derive(Debug, Default)]
-pub struct ElfMagicNumber([u8; 4]);
+pub struct ElfMagicNumber(String);
 
 impl std::fmt::Display for ElfMagicNumber {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -1055,6 +1055,8 @@ pub fn parse_magic_number(pointer: &mut usize, content: &[u8]) -> Result<ElfMagi
     if magic_number != val_magic {
         return Err("Unsupported file type".into());
     }
+
+    let magic_number = String::from_utf8_lossy(&magic_number).to_string();
 
     Ok(ElfMagicNumber(magic_number))
 }
@@ -1511,11 +1513,30 @@ pub fn parse_program_header(
     Ok(ElfProgramHeader { inner })
 }
 
-#[derive(Debug, Default, Tabled)]
+#[derive(Debug, Default)]
 pub struct ElfSectionHeader {
+    pub inner: Vec<ElfSectionHeaderEntry>,
+}
+
+impl ElfSectionHeader {
+    pub fn inner(self) -> Vec<ElfSectionHeaderEntry> {
+        self.inner
+    }
+}
+
+impl std::fmt::Display for ElfSectionHeader {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self.inner)
+    }
+}
+
+#[derive(Debug, Default, Tabled)]
+pub struct ElfSectionHeaderEntry {
     // An offset to a string in the .shstrtab section that
     // represents the name of this section.
     pub section_name_offset: ElfSectionNameOffset,
+    // The actual name
+    pub section_name: ElfSectionName,
     // Identifies the type of this header.
     pub section_header_type: ElfSectionHeaderType,
     // Identifies the attributes of the section.
@@ -1543,11 +1564,12 @@ pub struct ElfSectionHeader {
     pub section_entry_size: ElfSectionEntrySize,
 }
 
-impl std::fmt::Display for ElfSectionHeader {
+impl std::fmt::Display for ElfSectionHeaderEntry {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let txt = format!(
-            "{}\n{}\n{}\n{}\n{}\n{}\n{}\n{}\n{}\n{}",
+            "{}\n{}\n{}\n{}\n{}\n{}\n{}\n{}\n{}\n{}\n{}",
             self.section_name_offset,
+            self.section_name,
             self.section_header_type,
             self.section_flags,
             self.section_addr,
@@ -1559,6 +1581,15 @@ impl std::fmt::Display for ElfSectionHeader {
             self.section_entry_size
         );
         write!(f, "{}", txt)
+    }
+}
+
+#[derive(Debug, Default)]
+pub struct ElfSectionName(String);
+
+impl std::fmt::Display for ElfSectionName {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
     }
 }
 
@@ -1900,7 +1931,8 @@ pub fn parse_section_header_type(
         0x12 => ElfSectionHeaderType::ShtSymtabShndx,
         0x13 => ElfSectionHeaderType::ShtNum,
         0x60000000 => ElfSectionHeaderType::ShtLoos,
-        other => return Err(format!("Unsupported section header type: {other}")),
+        _ => ElfSectionHeaderType::ShtNull,
+        // other => return Err(format!("Unsupported section header type: {other}")),
     };
 
     Ok(h_type)
@@ -1923,13 +1955,14 @@ pub fn parse_section_name_offset(
     Ok(ElfSectionNameOffset(offset))
 }
 
-pub fn parse_section_header(
+pub fn parse_section_header_entry(
     pointer: &mut usize,
     content: &[u8],
     endian: &ElfEndianness,
     platform: &ElfPlatformType,
-) -> Result<ElfSectionHeader, String> {
+) -> Result<ElfSectionHeaderEntry, String> {
     let section_name_offset = parse_section_name_offset(pointer, content, endian)?;
+    let section_name = ElfSectionName::default();
     let section_header_type = parse_section_header_type(pointer, content, endian)?;
     let section_flags = parse_section_flags(pointer, content, endian, platform)?;
     let section_addr = parse_section_addr(pointer, content, endian, platform)?;
@@ -1940,18 +1973,54 @@ pub fn parse_section_header(
     let section_addr_allign = parse_section_addr_allignment(pointer, content, endian, platform)?;
     let section_entry_size = parse_section_entry_size(pointer, content, endian, platform)?;
 
-    Ok(ElfSectionHeader {
-        section_name_offset,
-        section_header_type,
-        section_flags,
-        section_addr,
-        section_offset,
-        section_size,
-        section_link,
-        section_info,
-        section_addr_allign,
-        section_entry_size,
+    Ok({
+        ElfSectionHeaderEntry {
+            section_name_offset,
+            section_name,
+            section_header_type,
+            section_flags,
+            section_addr,
+            section_offset,
+            section_size,
+            section_link,
+            section_info,
+            section_addr_allign,
+            section_entry_size,
+        }
     })
+}
+
+pub fn parse_section_header(
+    pointer: &mut usize,
+    content: &[u8],
+    entry_count: &ElfSectionHeaderEntryCount,
+    sections_names_index: &ElfSectionHeaderSectionsTableIndex,
+    endian: &ElfEndianness,
+    platform: &ElfPlatformType,
+) -> Result<ElfSectionHeader, String> {
+    let entry_count = entry_count.0 as usize;
+    let mut entries = Vec::with_capacity(entry_count);
+    for _ in 0..entry_count {
+        let entry = parse_section_header_entry(pointer, content, endian, platform)?;
+        entries.push(entry);
+    }
+
+    // update the sections names
+    let index = sections_names_index.0 as usize;
+    let section = &entries[index];
+    let section_offset = &section.section_offset.0 as &usize;
+    let section_size = section.section_size.0 as usize;
+    let bytes: &[u8] = &content[*section_offset..*section_offset + section_size];
+    let names = bytes
+        .split(|b| *b == 0u8)
+        .map(|b| String::from_utf8(b.to_vec()).unwrap())
+        .collect::<Vec<String>>();
+    entries
+        .iter_mut()
+        .zip(names.into_iter())
+        .for_each(|(entry, name)| entry.section_name = ElfSectionName(name));
+
+    Ok(ElfSectionHeader { inner: entries })
 }
 
 pub fn pretty_display<T>(items: &[T])
@@ -1985,6 +2054,8 @@ pub fn parse_file(args: &Cli) -> Result<ElfBinary, String> {
             elf_binary.section_header = parse_section_header(
                 &mut pointer,
                 &content,
+                &elf_binary.header.section_header_entry_count,
+                &elf_binary.header.section_header_sections_table_index,
                 &elf_binary.header.endianness,
                 &elf_binary.header.platform_type,
             )?;
@@ -2003,6 +2074,8 @@ pub fn parse_file(args: &Cli) -> Result<ElfBinary, String> {
             elf_binary.section_header = parse_section_header(
                 &mut pointer,
                 &content,
+                &elf_binary.header.section_header_entry_count,
+                &elf_binary.header.section_header_sections_table_index,
                 &elf_binary.header.endianness,
                 &elf_binary.header.platform_type,
             )?;
@@ -2019,11 +2092,11 @@ fn main() -> Result<(), String> {
     match args.to_process {
         ElfParts::Header => pretty_display(&[elf_binary.header]),
         ElfParts::ProgramHeader => pretty_display(&elf_binary.program_header.inner()),
-        ElfParts::SectionHeader => pretty_display(&[elf_binary.section_header]),
+        ElfParts::SectionHeader => pretty_display(&elf_binary.section_header.inner()),
         ElfParts::All => {
             pretty_display(&[elf_binary.header]);
             pretty_display(&elf_binary.program_header.inner());
-            pretty_display(&[elf_binary.section_header]);
+            pretty_display(&elf_binary.section_header.inner());
         }
     }
 
