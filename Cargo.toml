@@ -1,8 +1,15 @@
 [package]
+authors = ["Juan Milkah <juanmilkah@proton.me"]
+description = "An Elf binary file parser"
+edition = "2024"
 name = "elfp"
 version = "0.1.0"
-edition = "2024"
-authors = ["Juan Milkah <juanmilkah@proton.me"]
 
 [dependencies]
 tabled = "0.20.0"
+
+[profile.release]
+incremental = true
+lto = "thin"
+opt-level = 3
+strip = "debuginfo"

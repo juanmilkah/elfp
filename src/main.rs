@@ -1730,7 +1730,6 @@ impl std::fmt::Display for ElfSectionNameOffset {
     }
 }
 
-// TODO: Join Everything!!
 #[derive(Debug, Default, Tabled)]
 pub struct ElfBinary {
     pub header: ElfHeader,
@@ -2016,8 +2015,17 @@ pub fn parse_file(args: &Cli) -> Result<ElfBinary, String> {
 fn main() -> Result<(), String> {
     let args = Cli::parse(std::env::args().skip(1))?;
     let elf_binary: ElfBinary = parse_file(&args)?;
-    pretty_display(&[elf_binary.header]);
-    pretty_display(&elf_binary.program_header.inner());
-    pretty_display(&[elf_binary.section_header]);
+
+    match args.to_process {
+        ElfParts::Header => pretty_display(&[elf_binary.header]),
+        ElfParts::ProgramHeader => pretty_display(&elf_binary.program_header.inner()),
+        ElfParts::SectionHeader => pretty_display(&[elf_binary.section_header]),
+        ElfParts::All => {
+            pretty_display(&[elf_binary.header]);
+            pretty_display(&elf_binary.program_header.inner());
+            pretty_display(&[elf_binary.section_header]);
+        }
+    }
+
     Ok(())
 }
