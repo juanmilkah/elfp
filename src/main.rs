@@ -607,7 +607,7 @@ pub struct ElfMagicNumber(String);
 
 impl std::fmt::Display for ElfMagicNumber {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", self.0)
+        write!(f, "{}", self.0)
     }
 }
 
