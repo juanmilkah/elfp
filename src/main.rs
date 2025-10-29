@@ -22,6 +22,7 @@ pub enum ElfParts {
     #[default]
     Header,
     ProgramHeader,
+    Data,
     SectionHeader,
     All,
 }
@@ -55,6 +56,8 @@ impl Parse for Cli {
                 cli.to_process = ElfParts::Header;
             } else if next == "--program" || next == "-p" {
                 cli.to_process = ElfParts::ProgramHeader;
+            } else if next == "--data" || next == "-d" {
+                cli.to_process = ElfParts::Data;
             } else if next == "--section" || next == "-s" {
                 cli.to_process = ElfParts::SectionHeader;
             } else if next == "--all" || next == "-a" {
@@ -1700,7 +1703,7 @@ impl std::fmt::Display for ElfSectionFlags {
     }
 }
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, PartialEq, Eq)]
 pub enum ElfSectionHeaderType {
     #[default]
     ShtNull, //Section header table entry unused
@@ -2008,9 +2011,9 @@ pub fn parse_section_header(
     // update the sections names
     let index = sections_names_index.0 as usize;
     let section = &entries[index];
-    let section_offset = section.section_offset.0 as usize;
+    let section_offset = &section.section_offset.0 as &usize;
     let section_size = section.section_size.0 as usize;
-    let bytes: &[u8] = &content[section_offset..section_offset + section_size];
+    let bytes: &[u8] = &content[*section_offset..*section_offset + section_size];
     let names = bytes
         .split(|b| *b == 0u8)
         .map(|b| String::from_utf8_lossy(b).to_string())
@@ -2033,47 +2036,82 @@ where
 
 pub fn parse_file(args: &Cli) -> Result<ElfBinary, String> {
     let content = read_file(&args.filepath)?;
-
-    // Track current offset into the content
-    let mut pointer = 0x0usize;
-
     let mut elf_binary = ElfBinary::default();
+    let mut pointer = 0x0usize;
     elf_binary.header = parse_header(&mut pointer, &content)?;
-
-    let parse_program_header = |pointer: &mut usize| -> Result<ElfProgramHeader, String> {
-        *pointer = elf_binary.header.program_header_offset.0;
-        parse_program_header(
-            pointer,
-            &content,
-            &elf_binary.header.program_header_entry_count,
-            &elf_binary.header.endianness,
-            &elf_binary.header.platform_type,
-        )
-    };
-
-    let parse_section_header = |pointer: &mut usize| -> Result<ElfSectionHeader, String> {
-        *pointer = elf_binary.header.section_header_offset.0;
-        parse_section_header(
-            pointer,
-            &content,
-            &elf_binary.header.section_header_entry_count,
-            &elf_binary.header.section_header_sections_table_index,
-            &elf_binary.header.endianness,
-            &elf_binary.header.platform_type,
-        )
-    };
 
     match args.to_process {
         ElfParts::Header => {}
         ElfParts::ProgramHeader => {
-            elf_binary.program_header = parse_program_header(&mut pointer)?;
+            pointer = elf_binary.header.program_header_offset.0;
+            elf_binary.program_header = parse_program_header(
+                &mut pointer,
+                &content,
+                &elf_binary.header.program_header_entry_count,
+                &elf_binary.header.endianness,
+                &elf_binary.header.platform_type,
+            )?;
         }
         ElfParts::SectionHeader => {
-            elf_binary.section_header = parse_section_header(&mut pointer)?;
+            pointer = elf_binary.header.section_header_offset.0;
+            elf_binary.section_header = parse_section_header(
+                &mut pointer,
+                &content,
+                &elf_binary.header.section_header_entry_count,
+                &elf_binary.header.section_header_sections_table_index,
+                &elf_binary.header.endianness,
+                &elf_binary.header.platform_type,
+            )?;
+        }
+        ElfParts::Data => {
+            pointer = elf_binary.header.section_header_offset.0;
+            elf_binary.section_header = parse_section_header(
+                &mut pointer,
+                &content,
+                &elf_binary.header.section_header_entry_count,
+                &elf_binary.header.section_header_sections_table_index,
+                &elf_binary.header.endianness,
+                &elf_binary.header.platform_type,
+            )?;
+
+            elf_binary.section_header.inner.iter().for_each(|section| {
+                if section.section_header_type == ElfSectionHeaderType::ShtProgbits {
+                    let section_offset = section.section_offset.0 as usize;
+                    let section_size = section.section_size.0 as usize;
+                    let section_name = &section.section_name.0;
+
+                    let data = &content[section_offset..section_offset + section_size];
+
+                    println!();
+                    // println!();
+                    println!(
+                        "Section: {} | Offset: {:X} | Size: {:X}",
+                        section_name, section_offset, section_size
+                    );
+
+                    println!("{:02X?}", &data[..16.min(data.len())]);
+                }
+            });
         }
         ElfParts::All => {
-            elf_binary.program_header = parse_program_header(&mut pointer)?;
-            elf_binary.section_header = parse_section_header(&mut pointer)?;
+            pointer = elf_binary.header.program_header_offset.0;
+            elf_binary.program_header = parse_program_header(
+                &mut pointer,
+                &content,
+                &elf_binary.header.program_header_entry_count,
+                &elf_binary.header.endianness,
+                &elf_binary.header.platform_type,
+            )?;
+
+            pointer = elf_binary.header.section_header_offset.0;
+            elf_binary.section_header = parse_section_header(
+                &mut pointer,
+                &content,
+                &elf_binary.header.section_header_entry_count,
+                &elf_binary.header.section_header_sections_table_index,
+                &elf_binary.header.endianness,
+                &elf_binary.header.platform_type,
+            )?;
         }
     }
 
@@ -2087,6 +2125,7 @@ fn main() -> Result<(), String> {
     match args.to_process {
         ElfParts::Header => pretty_display(&[elf_binary.header]),
         ElfParts::ProgramHeader => pretty_display(&elf_binary.program_header.inner()),
+        ElfParts::Data => pretty_display(&elf_binary.program_header.inner()),
         ElfParts::SectionHeader => pretty_display(&elf_binary.section_header.inner()),
         ElfParts::All => {
             pretty_display(&[elf_binary.header]);
