@@ -2155,15 +2155,13 @@ fn print_data(elf_binary: &ElfBinary) {
 }
 
 fn main() -> Result<(), String> {
-    let args_1: Vec<String> = std::env::args().collect();
-    println!("Raw args: {:?}", args_1);
+    let args_array: Vec<String> = std::env::args().collect();
 
-    for i in 3..args_1.len() {
+    for i in 3..args_array.len() {
         let args = Cli::parse(std::env::args().skip(1))?;
         let elf_binary: ElfBinary = parse_file(&args)?;
 
         let arg = Cli::parse(std::env::args().skip(i))?;
-
         let x = arg.to_process.as_str();
         println!();
         println!();
@@ -2171,7 +2169,7 @@ fn main() -> Result<(), String> {
         println!();
 
         match arg.to_process {
-            ElfParts::Header => pretty_display(&[elf_binary.header]),
+            ElfParts::Header => pretty_display(&[&elf_binary.header]),
             ElfParts::ProgramHeader => pretty_display(&elf_binary.program_header.inner()),
             ElfParts::Data => print_data(&elf_binary),
             ElfParts::SectionHeader => pretty_display(&elf_binary.section_header.inner()),
