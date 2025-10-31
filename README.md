@@ -5,9 +5,10 @@ An ELF binary file format parser
 
 ```bash
 cargo build --release
-./target/release/elfp --help
-./target/release/elfp --filepath <path-to-elf-file>
-./target/release/elfp -f <path-to-elf> [--header | --program | --section | --all]
+
+elfp --help
+elfp --filepath <path-to-elf-file> > dump
+elfp -f <path-to-elf> [--header | --program | --section | --all] [--data] > dump
 ```
 
 Wish you luck!
